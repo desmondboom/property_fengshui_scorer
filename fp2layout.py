@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import cv2
-import pytesseract
-import numpy as np
+import argparse
 import json
 import re
-import argparse
-from dataclasses import dataclass, asdict
-from typing import List, Dict, Tuple, Optional
+from dataclasses import asdict, dataclass
+from typing import Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
+import pytesseract
 
 # --------- 可调词典：房间名正则 -> 归一化类型 ----------
 ROOM_PATTERNS = [
@@ -33,6 +34,19 @@ ROOM_PATTERNS = [
 
 DIRECTION_8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
+# 允许的朝向 & 反向映射
+ALLOWED_FACING = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+OPPOSITE = {
+    "N": "S",
+    "NE": "SW",
+    "E": "W",
+    "SE": "NW",
+    "S": "N",
+    "SW": "NE",
+    "W": "E",
+    "NW": "SE",
+}
+
 
 @dataclass
 class DetectedLabel:
@@ -43,6 +57,26 @@ class DetectedLabel:
     center_xy: Tuple[float, float]  # normalized [0,1] relative to image (x,y)
     direction8: str
     palace9: str  # 九宫：NW,N,NE / W,C,E / SW,S,SE
+
+
+def infer_house_facing(rooms: List[DetectedLabel]) -> Optional[str]:
+    """
+    简易推断：
+    1) 优先用 entry/porch/foyer 所在九宫当作朝向；
+    2) 没有入口标签，则若有 alfresco/backyard/balcony，则用其对面方向；
+    3) 否则返回 None。
+    """
+    # 先找入口
+    for r in rooms:
+        nl = r.norm_label.lower()
+        if nl in {"entry", "porch", "foyer"}:
+            return r.palace9  # 直接用所在宫位 N/NE/...（与八方名一致）
+    # 用后院类的反向兜底
+    for r in rooms:
+        nl = r.norm_label.lower()
+        if nl in {"alfresco", "backyard", "balcony"}:
+            return OPPOSITE.get(r.palace9)
+    return None
 
 
 def preprocess_for_ocr(img: np.ndarray) -> np.ndarray:
@@ -164,7 +198,9 @@ def to_palace9(xy: Tuple[float, float]) -> str:
     return grid[(col, row)]
 
 
-def detect_layout(image_path: str, north_deg: float) -> Dict:
+def detect_layout(
+    image_path: str, north_deg: float, house_facing: Optional[str] = None
+) -> Dict:
     img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(image_path)
@@ -199,9 +235,14 @@ def detect_layout(image_path: str, north_deg: float) -> Dict:
         )
         rooms.append(item)
 
+    if not house_facing:
+        guessed = infer_house_facing(rooms)
+        house_facing = guessed if guessed in ALLOWED_FACING else None
+
     result = {
         "image_size": {"width": W, "height": H},
         "north_deg": north_deg,
+        "house_facing": house_facing,
         "rooms": [asdict(r) for r in rooms],
         "schema_version": "v1",
     }
@@ -219,10 +260,16 @@ def main():
         default=0.0,
         help="true north relative to image up, clockwise degrees",
     )
+    ap.add_argument(
+        "--house-facing",
+        type=str,
+        choices=sorted(list(ALLOWED_FACING)),
+        help="house facing direction: N/NE/E/SE/S/SW/W/NW; if omitted, try to infer from entry/alfresco",
+    )
     ap.add_argument("--out", default="layout.json", help="output JSON path")
     args = ap.parse_args()
 
-    data = detect_layout(args.image, args.north_deg)
+    data = detect_layout(args.image, args.north_deg, args.house_facing)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"[ok] saved: {args.out}  rooms={len(data['rooms'])}")
