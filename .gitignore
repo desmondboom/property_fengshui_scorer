@@ -8,6 +8,7 @@ yarn-error.log*
 dist/
 build/
 out/
+__pycache__/
 
 # Environment files
 .env
@@ -32,3 +33,5 @@ coverage/
 
 data/
 layout.json
+demo_result.json
+output/

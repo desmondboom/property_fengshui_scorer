@@ -61,7 +61,33 @@
 
 ## 使用方法
 
-### 1. 平面图解析
+### 🌐 Web 应用（推荐）
+
+启动 Web 界面进行交互式分析：
+
+```bash
+# 激活环境
+conda activate listing-score-env
+
+# 启动 Web 应用
+python run_app.py
+# 或者直接使用 streamlit
+streamlit run app.py
+```
+
+然后在浏览器中打开 `http://localhost:8501` 即可使用图形界面。
+
+**Web 应用功能：**
+
+- 📁 拖拽上传平面图
+- ⚙️ 可视化参数设置
+- 🔍 一键分析评分
+- 📊 实时结果展示
+- 💡 智能优化建议
+
+### 💻 命令行使用
+
+#### 1. 平面图解析
 
 ```bash
 python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out layout.json
@@ -74,7 +100,7 @@ python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out
 - `--house-facing`: 房屋朝向（N/NE/E/SE/S/SW/W/NW），可选，系统会自动推断
 - `--out`: 输出 JSON 文件路径
 
-### 2. 风水评分
+#### 2. 风水评分
 
 ```bash
 python zhongxuan_scorer.py layout.json
@@ -206,11 +232,14 @@ SW  S  SE
 listing-score-demo/
 ├── fp2layout.py          # 平面图解析模块
 ├── zhongxuan_scorer.py   # 风水评分模块
+├── app.py               # Streamlit Web 应用
+├── run_app.py           # Web 应用启动脚本
 ├── environment.yaml      # Conda环境配置
 ├── layout.json          # 示例输出文件
 ├── data/
 │   └── test.png         # 示例平面图
-└── README.md            # 项目说明文档
+├── README.md            # 中文说明文档
+└── README_EN.md         # 英文说明文档
 ```
 
 ## 注意事项

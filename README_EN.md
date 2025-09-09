@@ -61,7 +61,33 @@ Download and install [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wi
 
 ## Usage
 
-### 1. Floor Plan Analysis
+### 🌐 Web Application (Recommended)
+
+Launch the web interface for interactive analysis:
+
+```bash
+# Activate environment
+conda activate listing-score-env
+
+# Start web application
+python run_app.py
+# Or use streamlit directly
+streamlit run app.py
+```
+
+Then open `http://localhost:8501` in your browser to use the graphical interface.
+
+**Web Application Features:**
+
+- 📁 Drag & drop floor plan upload
+- ⚙️ Visual parameter settings
+- 🔍 One-click analysis and scoring
+- 📊 Real-time results display
+- 💡 Smart optimization suggestions
+
+### 💻 Command Line Usage
+
+#### 1. Floor Plan Analysis
 
 ```bash
 python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out layout.json
@@ -74,7 +100,7 @@ python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out
 - `--house-facing`: House orientation (N/NE/E/SE/S/SW/W/NW), optional, system will auto-infer
 - `--out`: Output JSON file path
 
-### 2. Feng Shui Scoring
+#### 2. Feng Shui Scoring
 
 ```bash
 python zhongxuan_scorer.py layout.json
@@ -202,10 +228,12 @@ SW  S  SE
 
 ## File Structure
 
-```
+```sh
 listing-score-demo/
 ├── fp2layout.py          # Floor plan analysis module
 ├── zhongxuan_scorer.py   # Feng Shui scoring module
+├── app.py               # Streamlit web application
+├── run_app.py           # Web app launcher script
 ├── environment.yaml      # Conda environment configuration
 ├── layout.json          # Example output file
 ├── data/
