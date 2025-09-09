@@ -84,6 +84,7 @@ Then open `http://localhost:8501` in your browser to use the graphical interface
 - 🔍 One-click analysis and scoring
 - 📊 Real-time results display
 - 💡 Smart optimization suggestions
+- 🌐 Chinese/English language switching
 
 ### 💻 Command Line Usage
 
@@ -234,6 +235,8 @@ listing-score-demo/
 ├── zhongxuan_scorer.py   # Feng Shui scoring module
 ├── app.py               # Streamlit web application
 ├── run_app.py           # Web app launcher script
+├── locales.py           # Multi-language configuration
+├── test_i18n.py         # Multi-language functionality test
 ├── environment.yaml      # Conda environment configuration
 ├── layout.json          # Example output file
 ├── data/

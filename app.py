@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 # Import our modules
 from fp2layout import detect_layout
 from zhongxuan_scorer import score_layout
+from locales import get_texts, get_language_options
 
 # Page configuration
 st.set_page_config(
@@ -85,64 +86,81 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
+    # Initialize session state for language
+    if 'language' not in st.session_state:
+        st.session_state.language = 'zh'
+    
+    # Get current language texts
+    texts = get_texts(st.session_state.language)
+    
+    # Language selector in top right
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col3:
+        selected_lang = st.selectbox(
+            "🌐 Language / 语言",
+            options=get_language_options(),
+            index=0 if st.session_state.language == 'zh' else 1,
+            key="language_selector"
+        )
+        
+        # Update language if changed
+        if selected_lang == "English":
+            st.session_state.language = 'en'
+        else:
+            st.session_state.language = 'zh'
+        
+        # Refresh texts after language change
+        texts = get_texts(st.session_state.language)
+    
     # Header
-    st.markdown('<h1 class="main-header">🏠 房屋布局评分系统</h1>', unsafe_allow_html=True)
-    st.markdown("基于中国传统风水学（八宅理论）的智能房屋布局评分系统")
+    st.markdown(f'<h1 class="main-header">🏠 {texts["page_title"]}</h1>', unsafe_allow_html=True)
+    st.markdown(texts["page_description"])
     
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ 设置参数")
+        st.header(texts["sidebar_title"])
         
         # North degree setting
         north_deg = st.slider(
-            "真北角度 (°)",
+            texts["north_degree_label"],
             min_value=0.0,
             max_value=360.0,
             value=0.0,
             step=1.0,
-            help="真北相对于图像上方的角度（顺时针度数）"
+            help=texts["north_degree_help"]
         )
         
         # House facing setting
-        facing_options = ["自动推断", "N", "NE", "E", "SE", "S", "SW", "W", "NW"]
-        facing_choice = st.selectbox("房屋朝向", facing_options)
-        house_facing = None if facing_choice == "自动推断" else facing_choice
+        facing_options = [texts["auto_infer"], "N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        facing_choice = st.selectbox(texts["house_facing_label"], facing_options)
+        house_facing = None if facing_choice == texts["auto_infer"] else facing_choice
         
         st.markdown("---")
-        st.markdown("### 📖 使用说明")
-        st.markdown("""
-        1. 上传清晰的房屋平面图
-        2. 调整真北角度（如需要）
-        3. 选择房屋朝向或让系统自动推断
-        4. 点击"开始分析"获取评分结果
-        """)
+        st.markdown(f"### {texts['usage_instructions']}")
+        for i, step in enumerate(texts["usage_steps"], 1):
+            st.markdown(f"{i}. {step}")
         
-        st.markdown("### 🏠 支持的房间类型")
-        st.markdown("""
-        - **入口**: entry, porch, foyer
-        - **卧室**: master_bedroom, bedroom
-        - **厨房**: kitchen, pantry
-        - **卫浴**: bath, wc, ensuite, laundry
-        - **储物**: garage, store, wir, robe
-        """)
+        st.markdown(f"### {texts['supported_rooms']}")
+        for room_type, examples in texts["room_examples"].items():
+            st.markdown(f"- **{texts['room_types'][room_type]}**: {examples}")
     
     # Main content
     col1, col2 = st.columns([1, 1])
     
     with col1:
-        st.header("📁 上传平面图")
+        st.header(texts["upload_section"])
         
         # File uploader
         uploaded_file = st.file_uploader(
-            "选择平面图文件",
+            texts["upload_label"],
             type=['png', 'jpg', 'jpeg'],
-            help="支持 PNG, JPG, JPEG 格式"
+            help=texts["upload_help"]
         )
         
         if uploaded_file is not None:
             # Display uploaded image
             image = Image.open(uploaded_file)
-            st.image(image, caption="上传的平面图", use_column_width=True)
+            st.image(image, caption=texts["uploaded_image_caption"], use_column_width=True)
             
             # Save uploaded file temporarily
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
@@ -150,8 +168,8 @@ def main():
                 temp_path = tmp_file.name
             
             # Analysis button
-            if st.button("🔍 开始分析", type="primary", use_container_width=True):
-                with st.spinner("正在分析平面图..."):
+            if st.button(texts["analyze_button"], type="primary", use_container_width=True):
+                with st.spinner(texts["analyzing_text"]):
                     try:
                         # Step 1: Detect layout
                         layout_data = detect_layout(temp_path, north_deg, house_facing)
@@ -164,45 +182,40 @@ def main():
                         st.session_state.score_data = score_data
                         st.session_state.analysis_done = True
                         
-                        st.success("分析完成！")
+                        st.success(texts["analysis_success"])
                         
                     except Exception as e:
-                        st.error(f"分析失败: {str(e)}")
+                        st.error(f"{texts['analysis_error']}: {str(e)}")
                     finally:
                         # Clean up temp file
                         os.unlink(temp_path)
     
     with col2:
-        st.header("📊 分析结果")
+        st.header(texts["results_section"])
         
         if st.session_state.get('analysis_done', False):
             score_data = st.session_state.score_data
             layout_data = st.session_state.layout_data
             
             # Display score and grade
-            display_score_card(score_data)
+            display_score_card(score_data, texts)
             
             # Display breakdown
-            display_breakdown(score_data)
+            display_breakdown(score_data, texts)
             
             # Display detected rooms
-            display_detected_rooms(layout_data)
+            display_detected_rooms(layout_data, texts)
             
             # Display advice
-            display_advice(score_data)
+            display_advice(score_data, texts)
             
         else:
-            st.info("请先上传平面图并开始分析")
-            st.markdown("### 🎯 评分标准预览")
-            st.markdown("""
-            - **S级**: 90-100分 (优秀)
-            - **A级**: 80-89分 (良好)  
-            - **B级**: 70-79分 (中等)
-            - **C级**: 60-69分 (一般)
-            - **D级**: 0-59分 (较差)
-            """)
+            st.info(texts["no_analysis_yet"])
+            st.markdown(f"### {texts['score_preview']}")
+            for grade, description in texts["grade_levels"].items():
+                st.markdown(f"- **{description}**")
 
-def display_score_card(score_data):
+def display_score_card(score_data, texts):
     """Display the main score card"""
     total = score_data['total']
     grade = score_data['grade']
@@ -219,16 +232,16 @@ def display_score_card(score_data):
     
     st.markdown(f"""
     <div class="score-card">
-        <h2>综合评分</h2>
-        <div class="{grade_colors.get(grade, 'grade-d')}">{total}分</div>
-        <h3>等级: {grade}级</h3>
+        <h2>{texts['total_score']}</h2>
+        <div class="{grade_colors.get(grade, 'grade-d')}">{total}{texts['points']}</div>
+        <h3>{texts['grade']}: {grade}{texts['level']}</h3>
         <p>{house_gua}</p>
     </div>
     """, unsafe_allow_html=True)
 
-def display_breakdown(score_data):
+def display_breakdown(score_data, texts):
     """Display detailed breakdown"""
-    st.subheader("📋 详细评分")
+    st.subheader(texts["detailed_scores"])
     
     breakdown = score_data['breakdown']
     
@@ -238,9 +251,9 @@ def display_breakdown(score_data):
     breakdown_data = []
     for key, value in breakdown.items():
         breakdown_data.append({
-            '项目': get_chinese_name(key),
-            '得分': value['score'],
-            '说明': value['why']
+            'Item': texts['score_items'].get(key, key),
+            texts['score']: value['score'],
+            texts['explanation']: value['why']
         })
     
     df = pd.DataFrame(breakdown_data)
@@ -254,12 +267,12 @@ def display_breakdown(score_data):
         else:
             return 'background-color: #f8f9fa; color: #6c757d'
     
-    styled_df = df.style.applymap(color_score, subset=['得分'])
+    styled_df = df.style.applymap(color_score, subset=[texts['score']])
     st.dataframe(styled_df, use_container_width=True)
 
-def display_detected_rooms(layout_data):
+def display_detected_rooms(layout_data, texts):
     """Display detected rooms"""
-    st.subheader("🏠 检测到的房间")
+    st.subheader(texts["detected_rooms"])
     
     rooms = layout_data.get('rooms', [])
     
@@ -268,16 +281,16 @@ def display_detected_rooms(layout_data):
             st.markdown(f"""
             <div class="room-item">
                 <strong>{room['norm_label']}</strong> 
-                (原始: {room['raw_text']})<br>
-                位置: {room['palace9']} | 方向: {room['direction8']} | 置信度: {room['conf']:.1f}%
+                ({texts['original_text']}: {room['raw_text']})<br>
+                {texts['position']}: {room['palace9']} | {texts['direction']}: {room['direction8']} | {texts['confidence']}: {room['conf']:.1f}%
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.warning("未检测到任何房间")
+        st.warning(texts["no_rooms_detected"])
 
-def display_advice(score_data):
+def display_advice(score_data, texts):
     """Display advice"""
-    st.subheader("💡 优化建议")
+    st.subheader(texts["optimization_advice"])
     
     advice_list = score_data.get('advice', [])
     
@@ -285,25 +298,12 @@ def display_advice(score_data):
         for i, advice in enumerate(advice_list, 1):
             st.markdown(f"""
             <div class="advice-box">
-                <strong>建议 {i}:</strong> {advice}
+                <strong>{texts['advice_prefix']} {i}:</strong> {advice}
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.info("暂无特殊建议")
+        st.info(texts["no_advice"])
 
-def get_chinese_name(key):
-    """Get Chinese name for breakdown items"""
-    name_mapping = {
-        'main_door': '大门位置',
-        'master_bed': '主卧位置', 
-        'kitchen': '厨房位置',
-        'bath_laundry': '卫浴/洗衣房',
-        'other_bed': '其他卧室',
-        'garage_store': '车库/储物间',
-        'center_c': '中宫占用',
-        'throughline': '穿堂直冲'
-    }
-    return name_mapping.get(key, key)
 
 if __name__ == "__main__":
     main()
