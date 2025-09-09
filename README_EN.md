@@ -86,6 +86,7 @@ Then open `http://localhost:8501` in your browser to use the graphical interface
 - 💡 Smart optimization suggestions
 - 🌐 Chinese/English language switching
 - 🌍 Northern/Southern hemisphere Feng Shui theory support
+- 🇺🇸 Chinese/English result output support
 
 ### 💻 Command Line Usage
 
@@ -110,9 +111,17 @@ python zhongxuan_scorer.py layout.json
 
 # Southern Hemisphere
 python zhongxuan_scorer.py layout.json --hemisphere southern
+
+# English Output
+python zhongxuan_scorer.py layout.json --language en
+
+# Southern Hemisphere English Output
+python zhongxuan_scorer.py layout.json --hemisphere southern --language en
 ```
 
 **Output Example:**
+
+**Chinese Output:**
 
 ```json
 {
@@ -132,6 +141,53 @@ python zhongxuan_scorer.py layout.json --hemisphere southern
   "advice": [
     "厨房落吉位易泄吉：宜以金属与中性色弱化火气，炉口朝宅吉方。",
     "整体格局稳健：保持整洁、通风、动静分区即可。"
+  ]
+}
+```
+
+**English Output:**
+
+```json
+{
+  "total": 87,
+  "grade": "A",
+  "house_gua": "Kan House (East Four Houses) (Southern Hemisphere)",
+  "breakdown": {
+    "main_door": {
+      "score": 20,
+      "why": "Main door in S (auspicious position)"
+    },
+    "master_bed": {
+      "score": 12,
+      "why": "Master bedroom in N (auspicious position)"
+    },
+    "kitchen": {
+      "score": 10,
+      "why": "Kitchen in E (inauspicious position) - drains negative energy"
+    },
+    "bath_laundry": {
+      "score": -2,
+      "why": "W-2"
+    },
+    "other_bed": {
+      "score": -3,
+      "why": "Bedrooms: 0 auspicious, 1 inauspicious"
+    },
+    "garage_store": {
+      "score": 0,
+      "why": "0 areas, +1 point per inauspicious position"
+    },
+    "center_c": {
+      "score": 0,
+      "why": "Center palace is safe"
+    },
+    "throughline": {
+      "score": 0,
+      "why": "Not detected/not applicable"
+    }
+  },
+  "advice": [
+    "Wet areas in auspicious position: keep doors closed, strong ventilation, use metal elements to reduce damp and turbid energy overflow."
   ]
 }
 ```
@@ -259,6 +315,7 @@ listing-score-demo/
 ├── locales.py           # Multi-language configuration
 ├── test_i18n.py         # Multi-language functionality test
 ├── test_hemisphere.py   # Southern hemisphere functionality test
+├── test_english_output.py # English output functionality test
 ├── environment.yaml      # Conda environment configuration
 ├── layout.json          # Example output file
 ├── data/

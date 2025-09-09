@@ -192,7 +192,7 @@ def main():
                         layout_data = detect_layout(temp_path, north_deg, house_facing)
                         
                         # Step 2: Score layout
-                        score_data = score_layout(layout_data, st.session_state.hemisphere)
+                        score_data = score_layout(layout_data, st.session_state.hemisphere, st.session_state.language)
                         
                         # Store results in session state
                         st.session_state.layout_data = layout_data

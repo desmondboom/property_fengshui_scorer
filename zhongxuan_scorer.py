@@ -31,6 +31,72 @@ FACING_TO_GUA = {
 
 EAST_HOUSES = {"坎", "离", "震", "巽"}
 
+# 英文文本常量
+EN_TEXTS = {
+    "hemisphere_labels": {
+        "northern": "Northern Hemisphere",
+        "southern": "Southern Hemisphere",
+    },
+    "house_groups": {"east": "East Four Houses", "west": "West Four Houses"},
+    "gua_names": {
+        "坎": "Kan",
+        "离": "Li",
+        "震": "Zhen",
+        "巽": "Xun",
+        "乾": "Qian",
+        "兑": "Dui",
+        "艮": "Gen",
+        "坤": "Kun",
+    },
+    "score_explanations": {
+        "main_door": {
+            "good": "Main door in {pos} (auspicious position)",
+            "center": "Main door in center palace - not suitable",
+            "bad": "Main door in {pos} (inauspicious position)",
+            "not_found": "Main door not detected",
+        },
+        "master_bed": {
+            "good": "Master bedroom in {pos} (auspicious position)",
+            "center": "Master bedroom in center palace - not suitable",
+            "bad": "Master bedroom in {pos} (inauspicious position)",
+            "not_found": "Master bedroom not detected",
+        },
+        "kitchen": {
+            "good_drain": "Kitchen in {pos} (auspicious position) - drains positive energy",
+            "bad_drain": "Kitchen in {pos} (inauspicious position) - drains negative energy",
+            "center": "Kitchen in center palace - not suitable",
+            "not_found": "Kitchen not detected",
+        },
+        "bath_laundry": {
+            "center": "Center palace -4",
+            "bad": "{pos}+2",
+            "good": "{pos}-2",
+            "not_found": "Wet areas not detected",
+        },
+        "other_bed": {
+            "summary": "Bedrooms: {good_count} auspicious, {bad_count} inauspicious"
+        },
+        "garage_store": {
+            "summary": "{count} areas, +1 point per inauspicious position"
+        },
+        "center_c": {
+            "offenders": "Center palace contains: {offenders}",
+            "safe": "Center palace is safe",
+        },
+        "throughline": {
+            "detected": "Entry and back door alignment - suspected direct line through",
+            "not_detected": "Not detected/not applicable",
+        },
+    },
+    "advice": {
+        "master_bed_bad": "Master bedroom in inauspicious position: prioritize adjusting bed head towards East Four ({east_dirs}) or West Four ({west_dirs}) auspicious directions.",
+        "kitchen_bad": "Kitchen in auspicious position drains positive energy: use metal elements and neutral colors to reduce fire energy, stove opening towards house auspicious direction.",
+        "bath_bad": "Wet areas in auspicious position: keep doors closed, strong ventilation, use metal elements to reduce damp and turbid energy overflow.",
+        "throughline_bad": "Entry and back door alignment: set up foyer/short cabinet/thick curtain, use carpet and segmented lighting in corridor to 'slow down qi'.",
+        "general_good": "Overall layout is stable: maintain cleanliness, ventilation, and proper activity zones.",
+    },
+}
+
 # 房间类别映射（可按需增改）
 LABEL_BUCKET = {
     "main_door": {"entry", "porch"},
@@ -61,7 +127,7 @@ def house_group_and_gua(facing: str, hemisphere: str = "northern"):
     """
     gua = FACING_TO_GUA.get(facing, None)
     group = "east" if (gua in EAST_HOUSES) else "west"
-    
+
     # 根据半球选择吉凶方位
     if hemisphere == "southern":
         # 南半球：东四宅和西四宅的吉凶方位互换
@@ -75,7 +141,7 @@ def house_group_and_gua(facing: str, hemisphere: str = "northern"):
             good = EAST_GOOD_NORTHERN
         else:
             good = WEST_GOOD_NORTHERN
-    
+
     bad = set(ALL_DIR8) - good
     return group, gua, good, bad
 
@@ -98,60 +164,155 @@ def in_set(palace: str, s: set):
     return palace in s
 
 
-def score_layout(data: dict, hemisphere: str = "northern") -> dict:
+def get_localized_text(key_path: str, language: str = "zh", **kwargs) -> str:
+    """获取本地化文本"""
+    if language == "en":
+        # 解析键路径，如 "score_explanations.main_door.good"
+        keys = key_path.split(".")
+        text = EN_TEXTS
+        for key in keys:
+            text = text.get(key, {})
+
+        if isinstance(text, str):
+            return text.format(**kwargs)
+        return str(text)
+    else:
+        # 中文文本（保持原有逻辑）
+        return key_path
+
+
+def score_layout(
+    data: dict, hemisphere: str = "northern", language: str = "zh"
+) -> dict:
     facing = data["house_facing"]
     group, gua, good, bad = house_group_and_gua(facing, hemisphere)
-    
-    # 根据半球调整宅卦标签
-    hemisphere_label = "北半球" if hemisphere == "northern" else "南半球"
-    house_gua_label = (
-        f"{gua}宅({'东四宅' if group=='east' else '西四宅'}) ({hemisphere_label})" if gua else ("未知宅卦")
-    )
+
+    # 根据半球和语言调整宅卦标签
+    if language == "en":
+        hemisphere_label = EN_TEXTS["hemisphere_labels"][hemisphere]
+        gua_name = EN_TEXTS["gua_names"].get(gua, gua)
+        group_name = EN_TEXTS["house_groups"][group]
+        house_gua_label = (
+            f"{gua_name} House ({group_name}) ({hemisphere_label})"
+            if gua
+            else "Unknown House Gua"
+        )
+    else:
+        hemisphere_label = "北半球" if hemisphere == "northern" else "南半球"
+        house_gua_label = (
+            f"{gua}宅({'东四宅' if group=='east' else '西四宅'}) ({hemisphere_label})"
+            if gua
+            else ("未知宅卦")
+        )
 
     breakdown = {}
 
     # 1) 大门
     door = pick_first(data, LABEL_BUCKET["main_door"])
     s = 0
-    why = "未检测到大门"
+    if language == "en":
+        why = get_localized_text("score_explanations.main_door.not_found", language)
+    else:
+        why = "未检测到大门"
+
     if door:
         p = door["palace9"]
         if in_set(p, good):
-            s, why = 20, f"大门在{p}(吉位)"
+            s = 20
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.main_door.good", language, pos=p
+                )
+            else:
+                why = f"大门在{p}(吉位)"
         elif p == "C":
-            s, why = -10, "大门在中宫不宜"
+            s = -10
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.main_door.center", language
+                )
+            else:
+                why = "大门在中宫不宜"
         else:
-            s, why = -15, f"大门在{p}(凶位)"
+            s = -15
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.main_door.bad", language, pos=p
+                )
+            else:
+                why = f"大门在{p}(凶位)"
     breakdown["main_door"] = {"score": s, "why": why}
 
     # 2) 主卧
     master = pick_first(data, LABEL_BUCKET["master"])
     s = 0
-    why = "未检测到主卧"
+    if language == "en":
+        why = get_localized_text("score_explanations.master_bed.not_found", language)
+    else:
+        why = "未检测到主卧"
+
     if master:
         p = master["palace9"]
         if in_set(p, good):
-            s, why = 12, f"主卧在{p}(吉位)"
+            s = 12
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.master_bed.good", language, pos=p
+                )
+            else:
+                why = f"主卧在{p}(吉位)"
         elif p == "C":
-            s, why = -10, "主卧在中宫不宜"
+            s = -10
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.master_bed.center", language
+                )
+            else:
+                why = "主卧在中宫不宜"
         else:
-            s, why = -12, f"主卧在{p}(凶位)"
+            s = -12
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.master_bed.bad", language, pos=p
+                )
+            else:
+                why = f"主卧在{p}(凶位)"
     breakdown["master_bed"] = {"score": s, "why": why}
 
     # 3) 厨房
     kitchens = pick_rooms(data, LABEL_BUCKET["kitchen"])
     s = 0
-    why = "未检测到厨房"
+    if language == "en":
+        why = get_localized_text("score_explanations.kitchen.not_found", language)
+    else:
+        why = "未检测到厨房"
+
     if kitchens:
         # 若有多个，以第一个为准；其余微调
         main_k = kitchens[0]
         p = main_k["palace9"]
         if in_set(p, bad) and p != "C":
-            s, why = 10, f"厨房在{p}(凶位)属泄凶"
+            s = 10
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.kitchen.bad_drain", language, pos=p
+                )
+            else:
+                why = f"厨房在{p}(凶位)属泄凶"
         elif p == "C":
-            s, why = -10, "厨房占中宫不宜"
+            s = -10
+            if language == "en":
+                why = get_localized_text("score_explanations.kitchen.center", language)
+            else:
+                why = "厨房占中宫不宜"
         else:
-            s, why = -8, f"厨房在{p}(吉位)易泄吉"
+            s = -8
+            if language == "en":
+                why = get_localized_text(
+                    "score_explanations.kitchen.good_drain", language, pos=p
+                )
+            else:
+                why = f"厨房在{p}(吉位)易泄吉"
         # 额外：若同时有卫生间同宫，加微扣
     breakdown["kitchen"] = {"score": s, "why": why}
 
@@ -163,14 +324,27 @@ def score_layout(data: dict, hemisphere: str = "northern") -> dict:
         p = w["palace9"]
         if p == "C":
             s -= 4
-            hits.append(f"{p}中宫-4")
+            if language == "en":
+                hits.append(get_localized_text("score_explanations.bath_laundry.center", language))
+            else:
+                hits.append(f"{p}中宫-4")
         elif in_set(p, bad):
             s += 2
-            hits.append(f"{p}+2")
+            if language == "en":
+                hits.append(get_localized_text("score_explanations.bath_laundry.bad", language, pos=p))
+            else:
+                hits.append(f"{p}+2")
         else:
             s -= 2
-            hits.append(f"{p}-2")
-    why = "；".join(hits) if hits else "未检测到湿区"
+            if language == "en":
+                hits.append(get_localized_text("score_explanations.bath_laundry.good", language, pos=p))
+            else:
+                hits.append(f"{p}-2")
+    
+    if language == "en":
+        why = "; ".join(hits) if hits else get_localized_text("score_explanations.bath_laundry.not_found", language)
+    else:
+        why = "；".join(hits) if hits else "未检测到湿区"
     breakdown["bath_laundry"] = {"score": s, "why": why}
 
     # 5) 次卧（整体倾向）
@@ -188,7 +362,12 @@ def score_layout(data: dict, hemisphere: str = "northern") -> dict:
         else:
             s -= 3
             bad_n += 1
-    why = f"卧室吉{good_n}间、凶{bad_n}间"
+    
+    if language == "en":
+        why = get_localized_text("score_explanations.other_bed.summary", language, 
+                               good_count=good_n, bad_count=bad_n)
+    else:
+        why = f"卧室吉{good_n}间、凶{bad_n}间"
     breakdown["other_bed"] = {"score": s, "why": why}
 
     # 6) 车库/储物
@@ -198,7 +377,11 @@ def score_layout(data: dict, hemisphere: str = "northern") -> dict:
         p = g["palace9"]
         if in_set(p, bad) and p != "C":
             s += 1
-    why = f"{len(gs)}处，凶位给+1/处"
+    
+    if language == "en":
+        why = get_localized_text("score_explanations.garage_store.summary", language, count=len(gs))
+    else:
+        why = f"{len(gs)}处，凶位给+1/处"
     breakdown["garage_store"] = {"score": s, "why": why}
 
     # 7) 中宫占用
@@ -210,21 +393,37 @@ def score_layout(data: dict, hemisphere: str = "northern") -> dict:
         ):
             s -= 5
             offenders.append(r["norm_label"])
-    why = "中宫包含：" + ",".join(offenders) if offenders else "中宫安全"
+    
+    if language == "en":
+        if offenders:
+            why = get_localized_text("score_explanations.center_c.offenders", language, 
+                                   offenders=",".join(offenders))
+        else:
+            why = get_localized_text("score_explanations.center_c.safe", language)
+    else:
+        why = "中宫包含：" + ",".join(offenders) if offenders else "中宫安全"
     breakdown["center_c"] = {"score": s, "why": why}
 
     # 8) 穿堂直冲（Entry 与后门/Alfresco 近似对线）
     entry = door
     alfresco = pick_first(data, {"alfresco", "backyard", "balcony"})
     s = 0
-    why = "未检测/不成立"
+    
+    if language == "en":
+        why = get_localized_text("score_explanations.throughline.not_detected", language)
+    else:
+        why = "未检测/不成立"
+    
     if entry and alfresco:
         ex, ey = entry["center_xy"]
         ax, ay = alfresco["center_xy"]
         # 同列（x 差<0.1）且纵向距离>0.5 视为对穿
         if abs(ex - ax) < 0.10 and abs(ey - ay) > 0.50:
             s = -8
-            why = "Entry 与后部主要开口近似同列，疑似穿堂"
+            if language == "en":
+                why = get_localized_text("score_explanations.throughline.detected", language)
+            else:
+                why = "Entry 与后部主要开口近似同列，疑似穿堂"
     breakdown["throughline"] = {"score": s, "why": why}
 
     # 汇总
@@ -245,45 +444,86 @@ def score_layout(data: dict, hemisphere: str = "northern") -> dict:
         "grade": grade,
         "house_gua": house_gua_label,
         "breakdown": breakdown,
-        "advice": build_advice(group, breakdown, hemisphere),
+        "advice": build_advice(group, breakdown, hemisphere, language),
     }
     return out
 
 
-def build_advice(group: str, bd: dict, hemisphere: str = "northern"):
+def build_advice(
+    group: str, bd: dict, hemisphere: str = "northern", language: str = "zh"
+):
     tips = []
-    
-    # 根据半球调整建议中的方位描述
-    if hemisphere == "southern":
-        east_directions = "南/西/西南/北"  # 南半球东四宅吉向
-        west_directions = "东/东北/南/东南"  # 南半球西四宅吉向
+
+    if language == "en":
+        # 英文建议
+        if hemisphere == "southern":
+            east_directions = "South/West/Southwest/North"  # 南半球东四宅吉向
+            west_directions = "East/Northeast/South/Southeast"  # 南半球西四宅吉向
+        else:
+            east_directions = "East/South/Southeast/North"  # 北半球东四宅吉向
+            west_directions = "West/Northwest/Southwest/Northeast"  # 北半球西四宅吉向
+
+        if bd["master_bed"]["score"] < 0:
+            tips.append(
+                get_localized_text(
+                    "advice.master_bed_bad",
+                    language,
+                    east_dirs=east_directions,
+                    west_dirs=west_directions,
+                )
+            )
+        if bd["kitchen"]["score"] < 0:
+            tips.append(get_localized_text("advice.kitchen_bad", language))
+        if bd["bath_laundry"]["score"] < 0:
+            tips.append(get_localized_text("advice.bath_bad", language))
+        if bd["throughline"]["score"] < 0:
+            tips.append(get_localized_text("advice.throughline_bad", language))
+        if not tips:
+            tips.append(get_localized_text("advice.general_good", language))
     else:
-        east_directions = "东/南/东南/北"  # 北半球东四宅吉向
-        west_directions = "西/西北/西南/东北"  # 北半球西四宅吉向
-    
-    if bd["master_bed"]["score"] < 0:
-        tips.append(
-            f"主卧若落凶位：优先调整床头朝东四({east_directions})或西四({west_directions})的吉向。"
-        )
-    if bd["kitchen"]["score"] < 0:
-        tips.append("厨房落吉位易泄吉：宜以金属与中性色弱化火气，炉口朝宅吉方。")
-    if bd["bath_laundry"]["score"] < 0:
-        tips.append("湿区落吉位：常闭门、强排风、以金元素为主，减少湿浊外溢。")
-    if bd["throughline"]["score"] < 0:
-        tips.append("入口与后门对穿：设玄关/矮柜/厚帘，走廊用地毯与分段照明\"缓气\"。")
-    if not tips:
-        tips.append("整体格局稳健：保持整洁、通风、动静分区即可。")
+        # 中文建议（原有逻辑）
+        if hemisphere == "southern":
+            east_directions = "南/西/西南/北"  # 南半球东四宅吉向
+            west_directions = "东/东北/南/东南"  # 南半球西四宅吉向
+        else:
+            east_directions = "东/南/东南/北"  # 北半球东四宅吉向
+            west_directions = "西/西北/西南/东北"  # 北半球西四宅吉向
+
+        if bd["master_bed"]["score"] < 0:
+            tips.append(
+                f"主卧若落凶位：优先调整床头朝东四({east_directions})或西四({west_directions})的吉向。"
+            )
+        if bd["kitchen"]["score"] < 0:
+            tips.append("厨房落吉位易泄吉：宜以金属与中性色弱化火气，炉口朝宅吉方。")
+        if bd["bath_laundry"]["score"] < 0:
+            tips.append("湿区落吉位：常闭门、强排风、以金元素为主，减少湿浊外溢。")
+        if bd["throughline"]["score"] < 0:
+            tips.append(
+                '入口与后门对穿：设玄关/矮柜/厚帘，走廊用地毯与分段照明"缓气"。'
+            )
+        if not tips:
+            tips.append("整体格局稳健：保持整洁、通风、动静分区即可。")
     return tips
 
 
 def main():
     ap = argparse.ArgumentParser(description="ZhongXuan Scoring (八宅+形峦)")
     ap.add_argument("layout_json", help="A 步输出的 layout.json，需包含 house_facing")
-    ap.add_argument("--hemisphere", choices=["northern", "southern"], default="northern", 
-                   help="半球选择: northern (北半球) 或 southern (南半球)")
+    ap.add_argument(
+        "--hemisphere",
+        choices=["northern", "southern"],
+        default="northern",
+        help="半球选择: northern (北半球) 或 southern (南半球)",
+    )
+    ap.add_argument(
+        "--language",
+        choices=["zh", "en"],
+        default="zh",
+        help="语言选择: zh (中文) 或 en (英文)",
+    )
     args = ap.parse_args()
     data = load_layout(args.layout_json)
-    result = score_layout(data, args.hemisphere)
+    result = score_layout(data, args.hemisphere, args.language)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

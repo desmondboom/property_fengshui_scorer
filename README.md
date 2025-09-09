@@ -86,6 +86,7 @@ streamlit run app.py
 - 💡 智能优化建议
 - 🌐 中英文语言切换
 - 🌍 南北半球风水理论支持
+- 🇺🇸 中英文结果输出支持
 
 ### 💻 命令行使用
 
@@ -110,9 +111,17 @@ python zhongxuan_scorer.py layout.json
 
 # 南半球
 python zhongxuan_scorer.py layout.json --hemisphere southern
+
+# 英文输出
+python zhongxuan_scorer.py layout.json --language en
+
+# 南半球英文输出
+python zhongxuan_scorer.py layout.json --hemisphere southern --language en
 ```
 
 **输出示例：**
+
+**中文输出：**
 
 ```json
 {
@@ -132,6 +141,53 @@ python zhongxuan_scorer.py layout.json --hemisphere southern
   "advice": [
     "厨房落吉位易泄吉：宜以金属与中性色弱化火气，炉口朝宅吉方。",
     "整体格局稳健：保持整洁、通风、动静分区即可。"
+  ]
+}
+```
+
+**英文输出：**
+
+```json
+{
+  "total": 87,
+  "grade": "A",
+  "house_gua": "Kan House (East Four Houses) (Southern Hemisphere)",
+  "breakdown": {
+    "main_door": {
+      "score": 20,
+      "why": "Main door in S (auspicious position)"
+    },
+    "master_bed": {
+      "score": 12,
+      "why": "Master bedroom in N (auspicious position)"
+    },
+    "kitchen": {
+      "score": 10,
+      "why": "Kitchen in E (inauspicious position) - drains negative energy"
+    },
+    "bath_laundry": {
+      "score": -2,
+      "why": "W-2"
+    },
+    "other_bed": {
+      "score": -3,
+      "why": "Bedrooms: 0 auspicious, 1 inauspicious"
+    },
+    "garage_store": {
+      "score": 0,
+      "why": "0 areas, +1 point per inauspicious position"
+    },
+    "center_c": {
+      "score": 0,
+      "why": "Center palace is safe"
+    },
+    "throughline": {
+      "score": 0,
+      "why": "Not detected/not applicable"
+    }
+  },
+  "advice": [
+    "Wet areas in auspicious position: keep doors closed, strong ventilation, use metal elements to reduce damp and turbid energy overflow."
   ]
 }
 ```
@@ -259,6 +315,7 @@ listing-score-demo/
 ├── locales.py           # 多语言配置文件
 ├── test_i18n.py         # 多语言功能测试
 ├── test_hemisphere.py   # 南半球功能测试
+├── test_english_output.py # 英文输出功能测试
 ├── environment.yaml      # Conda环境配置
 ├── layout.json          # 示例输出文件
 ├── data/
