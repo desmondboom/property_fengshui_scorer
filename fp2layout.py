@@ -9,7 +9,24 @@ from typing import Dict, List, Optional, Tuple
 
 import cv2
 import numpy as np
-import pytesseract
+
+# 尝试导入 EasyOCR，如果失败则回退到 Tesseract
+try:
+    import easyocr
+
+    EASYOCR_AVAILABLE = True
+    print("Using EasyOCR for text recognition")
+except ImportError:
+    EASYOCR_AVAILABLE = False
+    print("EasyOCR not available, trying Tesseract...")
+    try:
+        import pytesseract
+
+        TESSERACT_AVAILABLE = True
+        print("Using Tesseract for text recognition")
+    except ImportError:
+        TESSERACT_AVAILABLE = False
+        print("No OCR engine available!")
 
 # --------- 可调词典：房间名正则 -> 归一化类型 ----------
 # --------- Adjustable dictionary: Room name regex -> Normalized type ----------
@@ -103,12 +120,62 @@ def preprocess_for_ocr(img: np.ndarray) -> np.ndarray:
 
 
 def ocr_lines(img: np.ndarray) -> List[Dict]:
-    # 用 image_to_data 拿到每个“行”的框
-    # Use image_to_data to get bounding boxes for each "line"
-    config = "--oem 3 --psm 6"  # assume uniform block of text
-    data = pytesseract.image_to_data(
-        img, lang="eng", config=config, output_type=pytesseract.Output.DICT
-    )
+    """OCR 函数，优先使用 EasyOCR，回退到 Tesseract"""
+
+    if EASYOCR_AVAILABLE:
+        return ocr_with_easyocr(img)
+    elif TESSERACT_AVAILABLE:
+        return ocr_with_tesseract(img)
+    else:
+        raise RuntimeError(
+            "No OCR engine available. Please install EasyOCR or Tesseract.\n"
+            "For cloud deployment, use: pip install easyocr"
+        )
+
+
+def ocr_with_easyocr(img: np.ndarray) -> List[Dict]:
+    """使用 EasyOCR 进行文本识别"""
+    # 初始化 EasyOCR 读取器（只初始化一次）
+    if not hasattr(ocr_with_easyocr, "reader"):
+        print("Initializing EasyOCR reader...")
+        ocr_with_easyocr.reader = easyocr.Reader(["en"])
+
+    results = ocr_with_easyocr.reader.readtext(img)
+
+    out = []
+    for bbox, text, conf in results:
+        if conf > 0.1:  # 置信度阈值
+            # 转换 bbox 格式
+            x_coords = [point[0] for point in bbox]
+            y_coords = [point[1] for point in bbox]
+            x_min, x_max = min(x_coords), max(x_coords)
+            y_min, y_max = min(y_coords), max(y_coords)
+
+            out.append(
+                {
+                    "text": text.strip(),
+                    "bbox": [x_min, y_min, x_max, y_max],
+                    "conf": float(conf),
+                }
+            )
+    return out
+
+
+def ocr_with_tesseract(img: np.ndarray) -> List[Dict]:
+    """使用 Tesseract 进行文本识别（回退方案）"""
+    config = "--oem 3 --psm 6"
+    try:
+        data = pytesseract.image_to_data(
+            img, lang="eng", config=config, output_type=pytesseract.Output.DICT
+        )
+    except Exception as e:
+        if "tesseract is not installed" in str(e).lower():
+            raise RuntimeError(
+                "Tesseract OCR is not installed. Please install EasyOCR instead:\n"
+                "pip install easyocr"
+            ) from e
+        raise e
+
     n = len(data["text"])
     lines = {}
     for i in range(n):
@@ -126,16 +193,14 @@ def ocr_lines(img: np.ndarray) -> List[Dict]:
             }
         lines[key]["text"].append(text)
         lines[key]["confs"].append(conf)
-        # 扩 bbox
-        # Expand bbox
+        # 扩展 bbox
         l, t, r, b = lines[key]["bbox"]
         l = min(l, bbox[0])
         t = min(t, bbox[1])
         r = max(r, bbox[0] + bbox[2])
         b = max(b, bbox[1] + bbox[3])
         lines[key]["bbox"] = [l, t, r, b]
-    # 合并文本
-    # Merge text
+
     out = []
     for _, v in lines.items():
         joined = " ".join([x for x in v["text"] if x])

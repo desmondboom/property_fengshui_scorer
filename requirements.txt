@@ -6,7 +6,8 @@ pillow>=10.4.0
 
 # Computer vision - 使用headless版本
 opencv-python-headless>=4.12.0.88
-pytesseract>=0.3.13
+# 替换 pytesseract 为 easyocr
+easyocr>=1.7.0
 
 # Visualization
 plotly>=5.17.0
