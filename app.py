@@ -183,10 +183,10 @@ def main():
     with col1:
         st.header(texts["upload_section"])
 
-        # File uploader
+        # File uploader - PNG only
         uploaded_file = st.file_uploader(
             texts["upload_label"],
-            type=["png", "jpg", "jpeg"],
+            type=["png"],
             help=texts["upload_help"],
         )
 

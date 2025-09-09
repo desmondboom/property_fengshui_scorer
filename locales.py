@@ -11,7 +11,6 @@ ZH_TEXTS = {
     # 页面标题和描述
     "page_title": "房屋布局评分系统",
     "page_description": "基于中国传统风水学（八宅理论）的智能房屋布局评分系统",
-    
     # 侧边栏
     "sidebar_title": "⚙️ 设置参数",
     "north_degree_label": "真北角度 (°)",
@@ -28,34 +27,32 @@ ZH_TEXTS = {
         "选择房屋所在半球（北半球/南半球）",
         "调整真北角度（如需要）",
         "选择房屋朝向或让系统自动推断",
-        "点击\"开始分析\"获取评分结果"
+        '点击"开始分析"获取评分结果',
     ],
     "supported_rooms": "🏠 支持的房间类型",
     "room_types": {
         "entry": "入口",
-        "bedroom": "卧室", 
+        "bedroom": "卧室",
         "kitchen": "厨房",
         "bathroom": "卫浴",
-        "storage": "储物"
+        "storage": "储物",
     },
     "room_examples": {
         "entry": "entry, porch, foyer",
         "bedroom": "master_bedroom, bedroom",
         "kitchen": "kitchen, pantry",
         "bathroom": "bath, wc, ensuite, laundry",
-        "storage": "garage, store, wir, robe"
+        "storage": "garage, store, wir, robe",
     },
-    
     # 主界面
     "upload_section": "📁 上传平面图",
     "upload_label": "选择平面图文件",
-    "upload_help": "支持 PNG, JPG, JPEG 格式",
+    "upload_help": "仅支持 PNG 格式",
     "uploaded_image_caption": "上传的平面图",
     "analyze_button": "🔍 开始分析",
     "analyzing_text": "正在分析平面图...",
     "analysis_success": "分析完成！",
     "analysis_error": "分析失败",
-    
     # 结果展示
     "results_section": "📊 分析结果",
     "no_analysis_yet": "请先上传平面图并开始分析",
@@ -65,15 +62,13 @@ ZH_TEXTS = {
         "A": "A级: 80-89分 (良好)",
         "B": "B级: 70-79分 (中等)",
         "C": "C级: 60-69分 (一般)",
-        "D": "D级: 0-59分 (较差)"
+        "D": "D级: 0-59分 (较差)",
     },
-    
     # 评分卡片
     "total_score": "综合评分",
     "grade": "等级",
     "points": "分",
     "level": "级",
-    
     # 详细评分
     "detailed_scores": "📋 详细评分",
     "score_items": {
@@ -84,11 +79,10 @@ ZH_TEXTS = {
         "other_bed": "其他卧室",
         "garage_store": "车库/储物间",
         "center_c": "中宫占用",
-        "throughline": "穿堂直冲"
+        "throughline": "穿堂直冲",
     },
     "score": "得分",
     "explanation": "说明",
-    
     # 检测房间
     "detected_rooms": "🏠 检测到的房间",
     "no_rooms_detected": "未检测到任何房间",
@@ -96,11 +90,10 @@ ZH_TEXTS = {
     "position": "位置",
     "direction": "方向",
     "confidence": "置信度",
-    
     # 优化建议
     "optimization_advice": "💡 优化建议",
     "no_advice": "暂无特殊建议",
-    "advice_prefix": "建议"
+    "advice_prefix": "建议",
 }
 
 # 英文文本
@@ -108,7 +101,6 @@ EN_TEXTS = {
     # Page title and description
     "page_title": "House Layout Scoring System",
     "page_description": "An intelligent house layout scoring system based on traditional Chinese Feng Shui (Eight Mansions theory)",
-    
     # Sidebar
     "sidebar_title": "⚙️ Settings",
     "north_degree_label": "True North Angle (°)",
@@ -125,34 +117,32 @@ EN_TEXTS = {
         "Select the hemisphere (Northern/Southern)",
         "Adjust true north angle (if needed)",
         "Select house orientation or let system auto-infer",
-        "Click 'Start Analysis' to get scoring results"
+        "Click 'Start Analysis' to get scoring results",
     ],
     "supported_rooms": "🏠 Supported Room Types",
     "room_types": {
         "entry": "Entry",
         "bedroom": "Bedroom",
-        "kitchen": "Kitchen", 
+        "kitchen": "Kitchen",
         "bathroom": "Bathroom",
-        "storage": "Storage"
+        "storage": "Storage",
     },
     "room_examples": {
         "entry": "entry, porch, foyer",
         "bedroom": "master_bedroom, bedroom",
         "kitchen": "kitchen, pantry",
         "bathroom": "bath, wc, ensuite, laundry",
-        "storage": "garage, store, wir, robe"
+        "storage": "garage, store, wir, robe",
     },
-    
     # Main interface
     "upload_section": "📁 Upload Floor Plan",
     "upload_label": "Select Floor Plan File",
-    "upload_help": "Supports PNG, JPG, JPEG formats",
+    "upload_help": "PNG format only",
     "uploaded_image_caption": "Uploaded Floor Plan",
     "analyze_button": "🔍 Start Analysis",
     "analyzing_text": "Analyzing floor plan...",
     "analysis_success": "Analysis completed!",
     "analysis_error": "Analysis failed",
-    
     # Results display
     "results_section": "📊 Analysis Results",
     "no_analysis_yet": "Please upload a floor plan and start analysis first",
@@ -162,15 +152,13 @@ EN_TEXTS = {
         "A": "A Grade: 80-89 points (Good)",
         "B": "B Grade: 70-79 points (Average)",
         "C": "C Grade: 60-69 points (Fair)",
-        "D": "D Grade: 0-59 points (Poor)"
+        "D": "D Grade: 0-59 points (Poor)",
     },
-    
     # Score card
     "total_score": "Total Score",
     "grade": "Grade",
     "points": "points",
     "level": "Grade",
-    
     # Detailed scores
     "detailed_scores": "📋 Detailed Scores",
     "score_items": {
@@ -181,11 +169,10 @@ EN_TEXTS = {
         "other_bed": "Other Bedrooms",
         "garage_store": "Garage/Storage",
         "center_c": "Center Palace Usage",
-        "throughline": "Direct Line Through"
+        "throughline": "Direct Line Through",
     },
     "score": "Score",
     "explanation": "Explanation",
-    
     # Detected rooms
     "detected_rooms": "🏠 Detected Rooms",
     "no_rooms_detected": "No rooms detected",
@@ -193,18 +180,15 @@ EN_TEXTS = {
     "position": "Position",
     "direction": "Direction",
     "confidence": "Confidence",
-    
     # Optimization advice
     "optimization_advice": "💡 Optimization Advice",
     "no_advice": "No special advice available",
-    "advice_prefix": "Advice"
+    "advice_prefix": "Advice",
 }
 
 # 语言映射
-LANGUAGES = {
-    "中文": "zh",
-    "English": "en"
-}
+LANGUAGES = {"中文": "zh", "English": "en"}
+
 
 def get_texts(language="zh"):
     """获取指定语言的文本"""
@@ -212,6 +196,7 @@ def get_texts(language="zh"):
         return EN_TEXTS
     else:
         return ZH_TEXTS
+
 
 def get_language_options():
     """获取语言选项列表"""
