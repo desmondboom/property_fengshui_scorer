@@ -12,6 +12,7 @@ import numpy as np
 import pytesseract
 
 # --------- 可调词典：房间名正则 -> 归一化类型 ----------
+# --------- Adjustable dictionary: Room name regex -> Normalized type ----------
 ROOM_PATTERNS = [
     (r"\bmaster\s*bed(room)?\b", "master_bedroom"),
     (r"\bbed(room)?\s*([1-9])\b", "bedroom"),
@@ -65,6 +66,11 @@ def infer_house_facing(rooms: List[DetectedLabel]) -> Optional[str]:
     1) 优先用 entry/porch/foyer 所在九宫当作朝向；
     2) 没有入口标签，则若有 alfresco/backyard/balcony，则用其对面方向；
     3) 否则返回 None。
+
+    Simple inference:
+    1) Priority given to the palace position (direction) of entry/porch/foyer;
+    2) If no entrance label exists, use the opposite direction of alfresco/backyard/balcony if present;
+    3) Otherwise return None.
     """
     # 先找入口
     for r in rooms:
@@ -82,12 +88,15 @@ def infer_house_facing(rooms: List[DetectedLabel]) -> Optional[str]:
 def preprocess_for_ocr(img: np.ndarray) -> np.ndarray:
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     # 提高对比 + 去噪
+    # Enhance contrast + denoise
     gray = cv2.bilateralFilter(gray, 7, 50, 50)
     # 自适应阈值（反白）
+    # Adaptive threshold (invert to white)
     th = cv2.adaptiveThreshold(
         gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 35, 15
     )
     # 膨胀，让细文字连成块
+    # Dilate to connect thin text into blocks
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     th = cv2.dilate(th, kernel, iterations=1)
     return th
@@ -95,6 +104,7 @@ def preprocess_for_ocr(img: np.ndarray) -> np.ndarray:
 
 def ocr_lines(img: np.ndarray) -> List[Dict]:
     # 用 image_to_data 拿到每个“行”的框
+    # Use image_to_data to get bounding boxes for each "line"
     config = "--oem 3 --psm 6"  # assume uniform block of text
     data = pytesseract.image_to_data(
         img, lang="eng", config=config, output_type=pytesseract.Output.DICT
@@ -117,6 +127,7 @@ def ocr_lines(img: np.ndarray) -> List[Dict]:
         lines[key]["text"].append(text)
         lines[key]["confs"].append(conf)
         # 扩 bbox
+        # Expand bbox
         l, t, r, b = lines[key]["bbox"]
         l = min(l, bbox[0])
         t = min(t, bbox[1])
@@ -124,6 +135,7 @@ def ocr_lines(img: np.ndarray) -> List[Dict]:
         b = max(b, bbox[1] + bbox[3])
         lines[key]["bbox"] = [l, t, r, b]
     # 合并文本
+    # Merge text
     out = []
     for _, v in lines.items():
         joined = " ".join([x for x in v["text"] if x])
@@ -141,6 +153,7 @@ def ocr_lines(img: np.ndarray) -> List[Dict]:
 def normalize_label(text: str) -> Optional[Tuple[str, Dict]]:
     txt = text.lower()
     # 常见噪声清洗
+    # Clean common noise
     txt = (
         txt.replace("’", "'")
         .replace("‘", "'")
@@ -150,6 +163,7 @@ def normalize_label(text: str) -> Optional[Tuple[str, Dict]]:
     for pat, norm in ROOM_PATTERNS:
         if re.search(pat, txt):
             # 补充 bedroom 序号
+            # Add bedroom number
             m = re.search(r"\bbed(room)?\s*([1-9])\b", txt)
             meta = {}
             if norm == "bedroom" and m:
@@ -172,6 +186,7 @@ def rotate_point(xy: Tuple[float, float], north_deg: float) -> Tuple[float, floa
 
 def to_direction8(xy: Tuple[float, float]) -> str:
     # 以图像中心为原点, 计算角度 => 8 方位
+    # Use image center as origin, calculate angle => 8 directions
     cx, cy = 0.5, 0.5
     vx, vy = xy[0] - cx, cy - xy[1]  # y 轴向上为正
     ang = (np.rad2deg(np.arctan2(vy, vx)) + 360.0) % 360.0
@@ -181,6 +196,7 @@ def to_direction8(xy: Tuple[float, float]) -> str:
 
 def to_palace9(xy: Tuple[float, float]) -> str:
     # 九宫：把画面三等分
+    # Nine-palace grid: divide the image into three equal parts
     x, y = xy
     col = 0 if x < 1 / 3 else (2 if x > 2 / 3 else 1)
     row = 0 if y < 1 / 3 else (2 if y > 2 / 3 else 1)
