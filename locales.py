@@ -17,10 +17,15 @@ ZH_TEXTS = {
     "north_degree_label": "真北角度 (°)",
     "north_degree_help": "真北相对于图像上方的角度（顺时针度数）",
     "house_facing_label": "房屋朝向",
+    "hemisphere_label": "半球选择",
+    "hemisphere_northern": "北半球",
+    "hemisphere_southern": "南半球",
+    "hemisphere_help": "选择房屋所在半球，影响风水理论应用",
     "auto_infer": "自动推断",
     "usage_instructions": "📖 使用说明",
     "usage_steps": [
         "上传清晰的房屋平面图",
+        "选择房屋所在半球（北半球/南半球）",
         "调整真北角度（如需要）",
         "选择房屋朝向或让系统自动推断",
         "点击\"开始分析\"获取评分结果"
@@ -109,10 +114,15 @@ EN_TEXTS = {
     "north_degree_label": "True North Angle (°)",
     "north_degree_help": "True north angle relative to image top (clockwise degrees)",
     "house_facing_label": "House Orientation",
+    "hemisphere_label": "Hemisphere",
+    "hemisphere_northern": "Northern Hemisphere",
+    "hemisphere_southern": "Southern Hemisphere",
+    "hemisphere_help": "Select the hemisphere where the house is located, affects Feng Shui theory application",
     "auto_infer": "Auto Infer",
     "usage_instructions": "📖 Usage Instructions",
     "usage_steps": [
         "Upload a clear floor plan image",
+        "Select the hemisphere (Northern/Southern)",
         "Adjust true north angle (if needed)",
         "Select house orientation or let system auto-infer",
         "Click 'Start Analysis' to get scoring results"

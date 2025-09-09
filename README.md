@@ -85,6 +85,7 @@ streamlit run app.py
 - 📊 实时结果展示
 - 💡 智能优化建议
 - 🌐 中英文语言切换
+- 🌍 南北半球风水理论支持
 
 ### 💻 命令行使用
 
@@ -104,7 +105,11 @@ python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out
 #### 2. 风水评分
 
 ```bash
+# 北半球（默认）
 python zhongxuan_scorer.py layout.json
+
+# 南半球
+python zhongxuan_scorer.py layout.json --hemisphere southern
 ```
 
 **输出示例：**
@@ -139,6 +144,22 @@ python zhongxuan_scorer.py layout.json
 
 - **东四宅**: 坎宅(南)、离宅(北)、震宅(西)、巽宅(西北)
 - **西四宅**: 乾宅(东南)、兑宅(东)、艮宅(西南)、坤宅(东北)
+
+### 🌍 南北半球风水理论
+
+考虑到南半球和北半球的地理环境差异，系统支持两种风水理论：
+
+**北半球（传统理论）:**
+
+- 东四宅吉位：北、东、东南、南
+- 西四宅吉位：西北、东北、西、西南
+
+**南半球（调整理论）:**
+
+- 东四宅吉位：南、西、西南、北
+- 西四宅吉位：东南、南、东、东北
+
+在澳洲等南半球国家，太阳轨迹和磁场方向与北半球相反，因此风水理论也需要相应调整，以确保评分的准确性。
 
 ### 评分项目
 
@@ -237,6 +258,7 @@ listing-score-demo/
 ├── run_app.py           # Web 应用启动脚本
 ├── locales.py           # 多语言配置文件
 ├── test_i18n.py         # 多语言功能测试
+├── test_hemisphere.py   # 南半球功能测试
 ├── environment.yaml      # Conda环境配置
 ├── layout.json          # 示例输出文件
 ├── data/

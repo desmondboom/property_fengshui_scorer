@@ -86,9 +86,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    # Initialize session state for language
+    # Initialize session state for language and hemisphere
     if 'language' not in st.session_state:
         st.session_state.language = 'zh'
+    if 'hemisphere' not in st.session_state:
+        st.session_state.hemisphere = 'northern'
     
     # Get current language texts
     texts = get_texts(st.session_state.language)
@@ -129,6 +131,21 @@ def main():
             step=1.0,
             help=texts["north_degree_help"]
         )
+        
+        # Hemisphere setting
+        hemisphere_options = [texts["hemisphere_northern"], texts["hemisphere_southern"]]
+        hemisphere_choice = st.selectbox(
+            texts["hemisphere_label"], 
+            hemisphere_options,
+            index=0 if st.session_state.hemisphere == 'northern' else 1,
+            help=texts["hemisphere_help"]
+        )
+        
+        # Update hemisphere in session state
+        if hemisphere_choice == texts["hemisphere_southern"]:
+            st.session_state.hemisphere = 'southern'
+        else:
+            st.session_state.hemisphere = 'northern'
         
         # House facing setting
         facing_options = [texts["auto_infer"], "N", "NE", "E", "SE", "S", "SW", "W", "NW"]
@@ -175,7 +192,7 @@ def main():
                         layout_data = detect_layout(temp_path, north_deg, house_facing)
                         
                         # Step 2: Score layout
-                        score_data = score_layout(layout_data)
+                        score_data = score_layout(layout_data, st.session_state.hemisphere)
                         
                         # Store results in session state
                         st.session_state.layout_data = layout_data

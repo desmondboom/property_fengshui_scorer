@@ -85,6 +85,7 @@ Then open `http://localhost:8501` in your browser to use the graphical interface
 - 📊 Real-time results display
 - 💡 Smart optimization suggestions
 - 🌐 Chinese/English language switching
+- 🌍 Northern/Southern hemisphere Feng Shui theory support
 
 ### 💻 Command Line Usage
 
@@ -104,7 +105,11 @@ python fp2layout.py --image data/test.png --north-deg 0.0 --house-facing S --out
 #### 2. Feng Shui Scoring
 
 ```bash
+# Northern Hemisphere (default)
 python zhongxuan_scorer.py layout.json
+
+# Southern Hemisphere
+python zhongxuan_scorer.py layout.json --hemisphere southern
 ```
 
 **Output Example:**
@@ -139,6 +144,22 @@ The system is based on traditional Eight Mansions theory, categorizing houses in
 
 - **East Four Houses**: Kan House (South), Li House (North), Zhen House (West), Xun House (Northwest)
 - **West Four Houses**: Qian House (Southeast), Dui House (East), Gen House (Southwest), Kun House (Northeast)
+
+### 🌍 Northern/Southern Hemisphere Feng Shui Theory
+
+Considering the geographical differences between the Northern and Southern Hemispheres, the system supports two Feng Shui theories:
+
+**Northern Hemisphere (Traditional Theory):**
+
+- East Four Houses auspicious positions: North, East, Southeast, South
+- West Four Houses auspicious positions: Northwest, Northeast, West, Southwest
+
+**Southern Hemisphere (Adjusted Theory):**
+
+- East Four Houses auspicious positions: South, West, Southwest, North
+- West Four Houses auspicious positions: Southeast, South, East, Northeast
+
+In Southern Hemisphere countries like Australia, the sun's path and magnetic field direction are opposite to the Northern Hemisphere, so the Feng Shui theory needs to be adjusted accordingly to ensure scoring accuracy.
 
 ### Scoring Items
 
@@ -237,6 +258,7 @@ listing-score-demo/
 ├── run_app.py           # Web app launcher script
 ├── locales.py           # Multi-language configuration
 ├── test_i18n.py         # Multi-language functionality test
+├── test_hemisphere.py   # Southern hemisphere functionality test
 ├── environment.yaml      # Conda environment configuration
 ├── layout.json          # Example output file
 ├── data/

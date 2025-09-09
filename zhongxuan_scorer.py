@@ -7,8 +7,14 @@ import math
 import sys
 from collections import Counter, defaultdict
 
-EAST_GOOD = {"N", "E", "SE", "S"}
-WEST_GOOD = {"NW", "NE", "W", "SW"}
+# 北半球风水理论
+EAST_GOOD_NORTHERN = {"N", "E", "SE", "S"}
+WEST_GOOD_NORTHERN = {"NW", "NE", "W", "SW"}
+
+# 南半球风水理论（与北半球相反）
+EAST_GOOD_SOUTHERN = {"S", "W", "SW", "N"}
+WEST_GOOD_SOUTHERN = {"SE", "S", "E", "NE"}
+
 ALL_DIR8 = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
 # 朝向 -> 宅卦（用于标注；本版评分仅用“东/西四宅”的吉凶集合）
@@ -46,10 +52,30 @@ def load_layout(path: str) -> dict:
     return data
 
 
-def house_group_and_gua(facing: str):
+def house_group_and_gua(facing: str, hemisphere: str = "northern"):
+    """
+    根据朝向和半球确定宅卦和吉凶方位
+    Args:
+        facing: 房屋朝向
+        hemisphere: 半球 ("northern" 或 "southern")
+    """
     gua = FACING_TO_GUA.get(facing, None)
     group = "east" if (gua in EAST_HOUSES) else "west"
-    good = EAST_GOOD if group == "east" else WEST_GOOD
+    
+    # 根据半球选择吉凶方位
+    if hemisphere == "southern":
+        # 南半球：东四宅和西四宅的吉凶方位互换
+        if group == "east":
+            good = EAST_GOOD_SOUTHERN
+        else:
+            good = WEST_GOOD_SOUTHERN
+    else:
+        # 北半球：传统风水理论
+        if group == "east":
+            good = EAST_GOOD_NORTHERN
+        else:
+            good = WEST_GOOD_NORTHERN
+    
     bad = set(ALL_DIR8) - good
     return group, gua, good, bad
 
@@ -72,11 +98,14 @@ def in_set(palace: str, s: set):
     return palace in s
 
 
-def score_layout(data: dict) -> dict:
+def score_layout(data: dict, hemisphere: str = "northern") -> dict:
     facing = data["house_facing"]
-    group, gua, good, bad = house_group_and_gua(facing)
+    group, gua, good, bad = house_group_and_gua(facing, hemisphere)
+    
+    # 根据半球调整宅卦标签
+    hemisphere_label = "北半球" if hemisphere == "northern" else "南半球"
     house_gua_label = (
-        f"{gua}宅({'东四宅' if group=='east' else '西四宅'})" if gua else ("未知宅卦")
+        f"{gua}宅({'东四宅' if group=='east' else '西四宅'}) ({hemisphere_label})" if gua else ("未知宅卦")
     )
 
     breakdown = {}
@@ -216,23 +245,32 @@ def score_layout(data: dict) -> dict:
         "grade": grade,
         "house_gua": house_gua_label,
         "breakdown": breakdown,
-        "advice": build_advice(group, breakdown),
+        "advice": build_advice(group, breakdown, hemisphere),
     }
     return out
 
 
-def build_advice(group: str, bd: dict):
+def build_advice(group: str, bd: dict, hemisphere: str = "northern"):
     tips = []
+    
+    # 根据半球调整建议中的方位描述
+    if hemisphere == "southern":
+        east_directions = "南/西/西南/北"  # 南半球东四宅吉向
+        west_directions = "东/东北/南/东南"  # 南半球西四宅吉向
+    else:
+        east_directions = "东/南/东南/北"  # 北半球东四宅吉向
+        west_directions = "西/西北/西南/东北"  # 北半球西四宅吉向
+    
     if bd["master_bed"]["score"] < 0:
         tips.append(
-            "主卧若落凶位：优先调整床头朝东四(东/南/东南/北)或西四(西/西北/西南/东北)的吉向。"
+            f"主卧若落凶位：优先调整床头朝东四({east_directions})或西四({west_directions})的吉向。"
         )
     if bd["kitchen"]["score"] < 0:
         tips.append("厨房落吉位易泄吉：宜以金属与中性色弱化火气，炉口朝宅吉方。")
     if bd["bath_laundry"]["score"] < 0:
         tips.append("湿区落吉位：常闭门、强排风、以金元素为主，减少湿浊外溢。")
     if bd["throughline"]["score"] < 0:
-        tips.append("入口与后门对穿：设玄关/矮柜/厚帘，走廊用地毯与分段照明“缓气”。")
+        tips.append("入口与后门对穿：设玄关/矮柜/厚帘，走廊用地毯与分段照明\"缓气\"。")
     if not tips:
         tips.append("整体格局稳健：保持整洁、通风、动静分区即可。")
     return tips
@@ -241,9 +279,11 @@ def build_advice(group: str, bd: dict):
 def main():
     ap = argparse.ArgumentParser(description="ZhongXuan Scoring (八宅+形峦)")
     ap.add_argument("layout_json", help="A 步输出的 layout.json，需包含 house_facing")
+    ap.add_argument("--hemisphere", choices=["northern", "southern"], default="northern", 
+                   help="半球选择: northern (北半球) 或 southern (南半球)")
     args = ap.parse_args()
     data = load_layout(args.layout_json)
-    result = score_layout(data)
+    result = score_layout(data, args.hemisphere)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
